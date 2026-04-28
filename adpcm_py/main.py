@@ -11,7 +11,7 @@ os.environ.setdefault("XDG_CACHE_HOME", str(ROOT / ".cache"))
 import numpy as np
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
-from PyQt6.QtCore import QUrl
+from PyQt6.QtCore import Qt, QUrl
 from PyQt6.QtMultimedia import QSoundEffect
 from PyQt6.QtWidgets import (
     QApplication,
@@ -26,6 +26,8 @@ from PyQt6.QtWidgets import (
     QMainWindow,
     QMessageBox,
     QPushButton,
+    QScrollArea,
+    QSizePolicy,
     QSpinBox,
     QSplitter,
     QTextEdit,
@@ -43,35 +45,54 @@ OUTPUT_DIR = ROOT / "output"
 
 class PlotCanvas(FigureCanvas):
     def __init__(self) -> None:
-        self.figure = Figure(figsize=(9, 7), tight_layout=True)
+        self.figure = Figure(figsize=(9, 7), tight_layout=True, facecolor="#ffffff")
         super().__init__(self.figure)
         self.axes = self.figure.subplots(3, 1)
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
 
     def draw_empty(self) -> None:
         for ax in self.axes:
             ax.clear()
-            ax.grid(True, linestyle="--", alpha=0.35)
+            self._style_axis(ax)
         self.axes[0].set_title("Signal and error power spectrum")
         self.axes[1].set_title("Error histogram")
         self.axes[2].set_title("Waveforms")
         self.draw()
 
+    def _style_axis(self, ax) -> None:
+        ax.set_facecolor("#ffffff")
+        ax.grid(True, linestyle=":", color="#d3d7dc", linewidth=0.8)
+        ax.tick_params(colors="#2f343a", labelsize=9)
+        for spine in ax.spines.values():
+            spine.set_color("#c8cdd2")
+            spine.set_linewidth(0.8)
+        ax.title.set_color("#1f2328")
+        ax.xaxis.label.set_color("#2f343a")
+        ax.yaxis.label.set_color("#2f343a")
+
     def draw_result(self, result: AdpcmResult, fs: int, view_start: int = 0, view_end: int | None = None) -> None:
         ax_spectrum, ax_hist, ax_wave = self.axes
         for ax in self.axes:
             ax.clear()
-            ax.grid(True, linestyle="--", alpha=0.35)
+            self._style_axis(ax)
 
         freqs, signal_power = power_spectrum(result.x, fs)
         _, error_power = power_spectrum(result.error, fs)
         eps = np.finfo(float).eps
-        ax_spectrum.plot(freqs, 10 * np.log10(signal_power + eps), color="#c62828", linewidth=1.4, label="signal")
-        ax_spectrum.plot(freqs, 10 * np.log10(error_power + eps), color="#1565c0", linewidth=1.4, label="error")
+        ax_spectrum.plot(freqs, 10 * np.log10(signal_power + eps), color="#d62728", linewidth=1.4, label="signal")
+        ax_spectrum.plot(
+            freqs,
+            10 * np.log10(error_power + eps),
+            color="#1f77b4",
+            linewidth=1.2,
+            linestyle="--",
+            label="error",
+        )
         ax_spectrum.set_xlabel("Frequency [Hz]")
         ax_spectrum.set_ylabel("Log magnitude [dB]")
-        ax_spectrum.legend(loc="best")
+        ax_spectrum.legend(loc="best", frameon=False)
 
-        ax_hist.hist(result.error, bins=101, color="#455a64", edgecolor="white", linewidth=0.35)
+        ax_hist.hist(result.error, bins=101, color="#6f7f90", edgecolor="#ffffff", linewidth=0.35)
         ax_hist.set_xlabel("Error signal")
         ax_hist.set_ylabel("Count")
 
@@ -79,12 +100,12 @@ class PlotCanvas(FigureCanvas):
         start = max(0, min(view_start, result.x.size - 1))
         end = max(start + 1, min(end, result.x.size))
         t = np.arange(start, end) / fs
-        ax_wave.plot(t, result.x[start:end], color="#c62828", linewidth=1.0, label="x")
-        ax_wave.plot(t, result.xhat[start:end], color="#2e7d32", linewidth=1.0, label="xhat")
-        ax_wave.plot(t, result.error[start:end], color="#1565c0", linewidth=0.9, label="error")
+        ax_wave.plot(t, result.x[start:end], color="#d62728", linewidth=1.0, label="x")
+        ax_wave.plot(t, result.xhat[start:end], color="#2ca02c", linewidth=1.0, linestyle="--", label="xhat")
+        ax_wave.plot(t, result.error[start:end], color="#1f77b4", linewidth=0.9, linestyle=":", label="error")
         ax_wave.set_xlabel(f"Time [s], fs={fs} Hz")
         ax_wave.set_ylabel("Waveform value")
-        ax_wave.legend(loc="best")
+        ax_wave.legend(loc="best", frameon=False)
 
         self.draw()
 
@@ -93,7 +114,8 @@ class MainWindow(QMainWindow):
     def __init__(self) -> None:
         super().__init__()
         self.setWindowTitle("ADPCM Speech Coder - PyQt6")
-        self.resize(1280, 820)
+        self.resize(1320, 860)
+        self.setMinimumSize(900, 620)
 
         self.samples_float: np.ndarray | None = None
         self.samples_adpcm: np.ndarray | None = None
@@ -110,23 +132,37 @@ class MainWindow(QMainWindow):
         central = QWidget()
         self.setCentralWidget(central)
         root_layout = QVBoxLayout(central)
+        root_layout.setContentsMargins(18, 16, 18, 14)
+        root_layout.setSpacing(12)
 
+        header = QWidget()
+        header_layout = QVBoxLayout(header)
+        header_layout.setContentsMargins(0, 0, 0, 0)
+        header_layout.setSpacing(2)
         title = QLabel("ADPCM Speech Coder")
         title.setObjectName("title")
         subtitle = QLabel("Python/PyQt6 port of the Matlab speech-processing GUI")
         subtitle.setObjectName("subtitle")
-        root_layout.addWidget(title)
-        root_layout.addWidget(subtitle)
+        header_layout.addWidget(title)
+        header_layout.addWidget(subtitle)
+        root_layout.addWidget(header)
 
         splitter = QSplitter()
         root_layout.addWidget(splitter, 1)
 
         controls = self._build_controls()
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.Shape.NoFrame)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        scroll.setWidget(controls)
+        scroll.setMinimumWidth(380)
+        scroll.setMaximumWidth(460)
         self.canvas = PlotCanvas()
         self.canvas.draw_empty()
-        splitter.addWidget(controls)
+        splitter.addWidget(scroll)
         splitter.addWidget(self.canvas)
-        splitter.setSizes([390, 890])
+        splitter.setSizes([420, 900])
 
         self.statusBar().showMessage("Ready")
         self._apply_style()
@@ -135,14 +171,19 @@ class MainWindow(QMainWindow):
 
     def _build_controls(self) -> QWidget:
         panel = QWidget()
-        panel.setMinimumWidth(360)
+        panel.setObjectName("controlPanel")
+        panel.setMinimumWidth(350)
         layout = QVBoxLayout(panel)
+        layout.setContentsMargins(0, 0, 10, 0)
+        layout.setSpacing(12)
 
         file_group = QGroupBox("Input WAV")
         file_layout = QVBoxLayout(file_group)
         self.file_label = QLabel("No file loaded")
+        self.file_label.setObjectName("fileLabel")
         self.file_label.setWordWrap(True)
         load_button = QPushButton("Open WAV")
+        load_button.setObjectName("secondaryButton")
         load_button.clicked.connect(self.open_wav)
         file_layout.addWidget(self.file_label)
         file_layout.addWidget(load_button)
@@ -168,26 +209,38 @@ class MainWindow(QMainWindow):
         self.deltamax.setDecimals(1)
         self.deltamax.setSingleStep(100)
         self.deltamax.setValue(1600)
+        params_form.setLabelAlignment(Qt.AlignmentFlag.AlignLeft)
+        params_form.setFormAlignment(Qt.AlignmentFlag.AlignTop)
+        params_form.setVerticalSpacing(10)
         params_form.addRow("nbits", self.nbits)
         params_form.addRow("alpha", self.alpha)
         params_form.addRow("deltamin", self.deltamin)
         params_form.addRow("deltamax", self.deltamax)
         layout.addWidget(params_group)
 
+        actions_group = QGroupBox("Actions")
+        actions_layout = QVBoxLayout(actions_group)
         action_grid = QGridLayout()
+        action_grid.setHorizontalSpacing(8)
+        action_grid.setVerticalSpacing(8)
         run_button = QPushButton("Run ADPCM")
+        run_button.setObjectName("primaryButton")
         run_button.clicked.connect(self.run_adpcm)
         play_original = QPushButton("Play original")
+        play_original.setObjectName("secondaryButton")
         play_original.clicked.connect(lambda: self.play("original"))
         play_encoded = QPushButton("Play encoded")
+        play_encoded.setObjectName("secondaryButton")
         play_encoded.clicked.connect(lambda: self.play("encoded"))
         play_error = QPushButton("Play error")
+        play_error.setObjectName("secondaryButton")
         play_error.clicked.connect(lambda: self.play("error"))
         action_grid.addWidget(run_button, 0, 0, 1, 2)
         action_grid.addWidget(play_original, 1, 0)
         action_grid.addWidget(play_encoded, 1, 1)
         action_grid.addWidget(play_error, 2, 0, 1, 2)
-        layout.addLayout(action_grid)
+        actions_layout.addLayout(action_grid)
+        layout.addWidget(actions_group)
 
         view_group = QGroupBox("Waveform view")
         view_layout = QFormLayout(view_group)
@@ -197,6 +250,7 @@ class MainWindow(QMainWindow):
         self.view_end.setRange(1, 1)
         self.view_start.valueChanged.connect(self.refresh_view)
         self.view_end.valueChanged.connect(self.refresh_view)
+        view_layout.setVerticalSpacing(10)
         view_layout.addRow("start sample", self.view_start)
         view_layout.addRow("end sample", self.view_end)
         layout.addWidget(view_group)
@@ -204,34 +258,126 @@ class MainWindow(QMainWindow):
         stats_group = QGroupBox("Results")
         stats_layout = QVBoxLayout(stats_group)
         self.stats = QLabel("SNR: -")
+        self.stats.setObjectName("statsLabel")
         self.stats.setWordWrap(True)
         stats_layout.addWidget(self.stats)
         layout.addWidget(stats_group)
 
+        log_group = QGroupBox("Activity log")
+        log_layout = QVBoxLayout(log_group)
         self.log = QTextEdit()
         self.log.setReadOnly(True)
-        self.log.setMinimumHeight(180)
-        layout.addWidget(self.log, 1)
+        self.log.setMinimumHeight(150)
+        log_layout.addWidget(self.log)
+        layout.addWidget(log_group)
 
         close_line = QFrame()
         close_line.setFrameShape(QFrame.Shape.HLine)
         layout.addWidget(close_line)
         close_button = QPushButton("Close")
+        close_button.setObjectName("secondaryButton")
         close_button.clicked.connect(self.close)
         layout.addWidget(close_button)
+        layout.addStretch(1)
         return panel
 
     def _apply_style(self) -> None:
         self.setStyleSheet(
             """
-            QMainWindow, QWidget { background: #f6f7f9; color: #1f2933; font-size: 14px; }
-            QLabel#title { font-size: 28px; font-weight: 700; padding: 8px 4px 0 4px; }
-            QLabel#subtitle { color: #52606d; padding: 0 4px 8px 4px; }
-            QGroupBox { border: 1px solid #ccd3db; border-radius: 6px; margin-top: 10px; padding: 10px; background: #ffffff; }
-            QGroupBox::title { subcontrol-origin: margin; left: 10px; padding: 0 4px; }
-            QPushButton { background: #1f6feb; color: white; border: 0; border-radius: 5px; padding: 8px 10px; }
-            QPushButton:hover { background: #195fc8; }
-            QSpinBox, QDoubleSpinBox, QTextEdit { background: white; border: 1px solid #c7d0d9; border-radius: 4px; padding: 4px; }
+            QMainWindow, QWidget {
+                background: #ffffff;
+                color: #1f2328;
+                font-size: 14px;
+            }
+            QLabel#title {
+                font-size: 30px;
+                font-weight: 800;
+                letter-spacing: 0px;
+                padding: 0;
+            }
+            QLabel#subtitle {
+                color: #59636e;
+                padding: 0 0 4px 1px;
+            }
+            QWidget#controlPanel {
+                background: #ffffff;
+            }
+            QGroupBox {
+                border: 1px solid #d0d7de;
+                border-radius: 6px;
+                margin-top: 12px;
+                padding: 14px 12px 12px 12px;
+                background: #ffffff;
+                font-weight: 700;
+            }
+            QGroupBox::title {
+                subcontrol-origin: margin;
+                left: 10px;
+                padding: 0 6px;
+                background: #ffffff;
+            }
+            QLabel#fileLabel, QLabel#statsLabel {
+                font-family: Menlo, Monaco, Consolas, monospace;
+                font-size: 12px;
+                line-height: 1.3;
+            }
+            QPushButton {
+                border-radius: 5px;
+                padding: 9px 10px;
+                min-height: 18px;
+                font-weight: 700;
+            }
+            QPushButton#primaryButton {
+                background: #1f2328;
+                color: #ffffff;
+                border: 1px solid #1f2328;
+            }
+            QPushButton#primaryButton:hover {
+                background: #3b424a;
+            }
+            QPushButton#secondaryButton {
+                background: #ffffff;
+                color: #1f2328;
+                border: 1px solid #c9d1d9;
+            }
+            QPushButton#secondaryButton:hover {
+                background: #f6f8fa;
+            }
+            QSpinBox, QDoubleSpinBox, QTextEdit {
+                background: #ffffff;
+                color: #1f2328;
+                border: 1px solid #c9d1d9;
+                border-radius: 4px;
+                padding: 6px;
+                selection-background-color: #1f2328;
+                selection-color: #ffffff;
+            }
+            QTextEdit {
+                font-family: Menlo, Monaco, Consolas, monospace;
+                font-size: 12px;
+            }
+            QSplitter::handle {
+                background: #d0d7de;
+                width: 1px;
+            }
+            QScrollArea {
+                border: 0;
+            }
+            QScrollBar:vertical {
+                background: #ffffff;
+                width: 10px;
+                margin: 0;
+            }
+            QScrollBar::handle:vertical {
+                background: #8c959f;
+                min-height: 28px;
+                border-radius: 4px;
+            }
+            QStatusBar {
+                background: #ffffff;
+                color: #1f2328;
+                border-top: 1px solid #d0d7de;
+            }
             """
         )
 
