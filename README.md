@@ -1,6 +1,6 @@
 # ADPCM Speech Coder - Python/PyQt6
 
-Semestralne vypracovanie prevadza Matlab GUI aplikaciu `adpcm_GUI25.m` do Pythonu.
+Semestrálne vypracovanie prevádza Matlab GUI aplikáciu `adpcm_GUI25.m` do Pythonu.
 
 ## Spustenie
 
@@ -10,9 +10,9 @@ Semestralne vypracovanie prevadza Matlab GUI aplikaciu `adpcm_GUI25.m` do Python
 ./run_app.sh
 ```
 
-Skript pri prvom spusteni vytvori lokalne virtualne prostredie `venv`, nainstaluje zavislosti z `requirements.txt` a spusti aplikaciu.
+Skript pri prvom spustení vytvorí lokálne virtuálne prostredie `venv`, nainštaluje závislosti z `requirements.txt` a spustí aplikáciu.
 
-Rucny postup pre macOS/Linux:
+Ručný postup pre macOS/Linux:
 
 ```bash
 python3 -m venv venv
@@ -21,7 +21,7 @@ pip install -r requirements.txt
 python -m adpcm_py.main
 ```
 
-Ak uz su baliky vo `venv` nainstalovane, staci:
+Ak už sú balíky vo `venv` nainštalované, stačí:
 
 ```bash
 source venv/bin/activate
@@ -30,15 +30,15 @@ python -m adpcm_py.main
 
 ### Windows
 
-Najjednoduchsie spustenie:
+Najjednoduchšie spustenie:
 
 ```bat
 run_app.bat
 ```
 
-Skript pri prvom spusteni vytvori lokalne virtualne prostredie `venv`, nainstaluje zavislosti z `requirements.txt` a spusti aplikaciu.
+Skript pri prvom spustení vytvorí lokálne virtuálne prostredie `venv`, nainštaluje závislosti z `requirements.txt` a spustí aplikáciu.
 
-Rucny postup pre Windows:
+Ručný postup pre Windows:
 
 ```bat
 py -3 -m venv venv
@@ -47,7 +47,7 @@ pip install -r requirements.txt
 python -m adpcm_py.main
 ```
 
-Ak prikaz `py` nie je dostupny, pouzite:
+Ak príkaz `py` nie je dostupný, použite:
 
 ```bat
 python -m venv venv
@@ -55,16 +55,16 @@ python -m venv venv
 
 ## Funkcionalita
 
-- nacitanie WAV suboru,
+- načítanie WAV súboru,
 - nastavenie parametrov ADPCM kodera (`nbits`, `alpha`, `deltamin`, `deltamax`),
-- adaptivna kvantizacia podla Jayantovej metody,
-- vypocet SNR,
-- graf signal/error spektra, histogram chyby a priebehy `x`, `xhat`, `error`,
-- prehratie povodneho, kodovaneho a chyboveho signalu,
-- ulozenie vystupov do `adpcm_py/output`.
+- adaptívna kvantizácia podľa Jayantovej metódy,
+- výpočet SNR,
+- graf signál/error spektra, histogram chyby a priebehy `x`, `xhat`, `error`,
+- prehratie pôvodného, kódovaného a chybového signálu,
+- uloženie výstupov do `adpcm_py/output`.
 
-V povodnom ZIP-e nebol samostatny vstupny speech WAV z priecinka `speech_files`, preto je v `adpcm_py/data/hcdr05.wav` pripraveny ukazkovy WAV na okamzite vyskusanie aplikacie.
+V pôvodnom ZIP-e nebol samostatný vstupný speech WAV z priečinka `speech_files`, preto je v `adpcm_py/data/hcdr05.wav` pripravený ukážkový WAV na okamžité vyskúšanie aplikácie.
 
-## Vyvojove prostredie
+## Vývojové prostredie
 
-Vyvoj a testovanie prebiehali na MacBook Pro M4 (Apple Silicon, macOS 26 Tahoe), 48 GB RAM, 12-jadrovym CPU a 16-jadrovym GPU.
+Vývoj a testovanie prebiehali na MacBook Pro M4 (Apple Silicon, macOS 26 Tahoe), 48 GB RAM, 12-jadrovým CPU a 16-jadrovým GPU.
