@@ -68,3 +68,4 @@ V pôvodnom ZIP-e nebol samostatný vstupný speech WAV z priečinka `speech_fil
 ## Vývojové prostredie
 
 Vývoj a testovanie prebiehali na MacBook Pro M4 (Apple Silicon, macOS 26 Tahoe), 48 GB RAM, 12-jadrovým CPU a 16-jadrovým GPU.
+Vývoj a testovanie taktiež prebiehali na PC s 24 GB RAM, 4-jadrovým CPU, 8 GB GPU a operačným systémom Windows 11.
