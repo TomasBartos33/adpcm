@@ -7,6 +7,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 os.environ.setdefault("MPLCONFIGDIR", str(ROOT / ".matplotlib_cache"))
 os.environ.setdefault("XDG_CACHE_HOME", str(ROOT / ".cache"))
+os.environ["QT_LOGGING_RULES"] = "qt.multimedia.ffmpeg.debug=false;qt.multimedia.ffmpeg.info=false"
 
 import numpy as np
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
@@ -14,6 +15,7 @@ from matplotlib.figure import Figure
 from PyQt6.QtCore import Qt, QUrl
 from PyQt6.QtMultimedia import QSoundEffect
 from PyQt6.QtWidgets import (
+    QAbstractSpinBox,
     QApplication,
     QDoubleSpinBox,
     QFileDialog,
@@ -195,20 +197,24 @@ class MainWindow(QMainWindow):
         self.nbits.setRange(-5, 5)
         self.nbits.setValue(4)
         self.nbits.setToolTip("Allowed values: 2, 3, 4, 5, -4, -5")
+        self.nbits.setButtonSymbols(QAbstractSpinBox.ButtonSymbols.PlusMinus)
         self.alpha = QDoubleSpinBox()
         self.alpha.setRange(-1.0, 1.0)
         self.alpha.setSingleStep(0.05)
         self.alpha.setDecimals(2)
         self.alpha.setValue(0.8)
+        self.alpha.setButtonSymbols(QAbstractSpinBox.ButtonSymbols.PlusMinus)
         self.deltamin = QDoubleSpinBox()
         self.deltamin.setRange(1, 64)
         self.deltamin.setDecimals(1)
         self.deltamin.setValue(16)
+        self.deltamin.setButtonSymbols(QAbstractSpinBox.ButtonSymbols.PlusMinus)
         self.deltamax = QDoubleSpinBox()
         self.deltamax.setRange(400, 3200)
         self.deltamax.setDecimals(1)
         self.deltamax.setSingleStep(100)
         self.deltamax.setValue(1600)
+        self.deltamax.setButtonSymbols(QAbstractSpinBox.ButtonSymbols.PlusMinus)
         params_form.setLabelAlignment(Qt.AlignmentFlag.AlignLeft)
         params_form.setFormAlignment(Qt.AlignmentFlag.AlignTop)
         params_form.setVerticalSpacing(10)
@@ -246,8 +252,10 @@ class MainWindow(QMainWindow):
         view_layout = QFormLayout(view_group)
         self.view_start = QSpinBox()
         self.view_start.setRange(0, 1)
+        self.view_start.setButtonSymbols(QAbstractSpinBox.ButtonSymbols.PlusMinus)
         self.view_end = QSpinBox()
         self.view_end.setRange(1, 1)
+        self.view_end.setButtonSymbols(QAbstractSpinBox.ButtonSymbols.PlusMinus)
         self.view_start.valueChanged.connect(self.refresh_view)
         self.view_end.valueChanged.connect(self.refresh_view)
         view_layout.setVerticalSpacing(10)
@@ -282,68 +290,123 @@ class MainWindow(QMainWindow):
         return panel
 
     def _apply_style(self) -> None:
+        # Write arrow SVGs so the stylesheet can reference them
+        assets = ROOT / "assets"
+        assets.mkdir(exist_ok=True)
+        (assets / "arrow_up.svg").write_text(
+            '<svg xmlns="http://www.w3.org/2000/svg" width="10" height="6">'
+            '<polygon points="5,0 10,6 0,6" fill="#1f2328"/></svg>'
+        )
+        (assets / "arrow_down.svg").write_text(
+            '<svg xmlns="http://www.w3.org/2000/svg" width="10" height="6">'
+            '<polygon points="0,0 10,0 5,6" fill="#1f2328"/></svg>'
+        )
+        up_url   = (assets / "arrow_up.svg").as_posix()
+        down_url = (assets / "arrow_down.svg").as_posix()
+
         self.setStyleSheet(
-            """
-            QMainWindow, QWidget {
+            f"""
+            QMainWindow, QWidget {{
                 background: #ffffff;
                 color: #1f2328;
                 font-size: 14px;
-            }
-            QLabel#title {
+            }}
+            QLabel#title {{
                 font-size: 30px;
                 font-weight: 800;
                 letter-spacing: 0px;
                 padding: 0;
-            }
-            QLabel#subtitle {
+            }}
+            QLabel#subtitle {{
                 color: #59636e;
                 padding: 0 0 4px 1px;
-            }
-            QWidget#controlPanel {
+            }}
+            QWidget#controlPanel {{
                 background: #ffffff;
-            }
-            QGroupBox {
+            }}
+            QGroupBox {{
                 border: 1px solid #d0d7de;
                 border-radius: 6px;
                 margin-top: 12px;
                 padding: 14px 12px 12px 12px;
                 background: #ffffff;
                 font-weight: 700;
-            }
-            QGroupBox::title {
+            }}
+            QGroupBox::title {{
                 subcontrol-origin: margin;
                 left: 10px;
                 padding: 0 6px;
                 background: #ffffff;
-            }
-            QLabel#fileLabel, QLabel#statsLabel {
+            }}
+            QLabel#fileLabel, QLabel#statsLabel {{
                 font-family: Menlo, Monaco, Consolas, monospace;
                 font-size: 12px;
                 line-height: 1.3;
-            }
-            QPushButton {
+            }}
+            QPushButton {{
                 border-radius: 5px;
                 padding: 9px 10px;
                 min-height: 18px;
                 font-weight: 700;
-            }
-            QPushButton#primaryButton {
+            }}
+            QPushButton#primaryButton {{
                 background: #1f2328;
                 color: #ffffff;
                 border: 1px solid #1f2328;
-            }
-            QPushButton#primaryButton:hover {
+            }}
+            QPushButton#primaryButton:hover {{
                 background: #3b424a;
-            }
-            QPushButton#secondaryButton {
+            }}
+            QPushButton#secondaryButton {{
                 background: #ffffff;
                 color: #1f2328;
                 border: 1px solid #c9d1d9;
-            }
-            QPushButton#secondaryButton:hover {
+            }}
+            QPushButton#secondaryButton:hover {{
                 background: #f6f8fa;
-            }
-            QSpinBox, QDoubleSpinBox, QTextEdit {
+            }}
+            QSpinBox, QDoubleSpinBox {{
+                background: #ffffff;
+                color: #1f2328;
+                border: 1px solid #c9d1d9;
+                border-radius: 4px;
+                padding: 6px 22px 6px 6px;
+                selection-background-color: #1f2328;
+                selection-color: #ffffff;
+            }}
+            QSpinBox::up-button, QDoubleSpinBox::up-button {{
+                subcontrol-origin: border;
+                subcontrol-position: top right;
+                width: 20px;
+                border-left: 1px solid #c9d1d9;
+                border-bottom: 1px solid #c9d1d9;
+                border-top-right-radius: 4px;
+                background: #f6f8fa;
+                image: url({up_url});
+            }}
+            QSpinBox::up-button:hover, QDoubleSpinBox::up-button:hover {{
+                background: #e8ecf0;
+            }}
+            QSpinBox::up-button:pressed, QDoubleSpinBox::up-button:pressed {{
+                background: #d0d7de;
+            }}
+            QSpinBox::down-button, QDoubleSpinBox::down-button {{
+                subcontrol-origin: border;
+                subcontrol-position: bottom right;
+                width: 20px;
+                border-left: 1px solid #c9d1d9;
+                border-top: 1px solid #c9d1d9;
+                border-bottom-right-radius: 4px;
+                background: #f6f8fa;
+                image: url({down_url});
+            }}
+            QSpinBox::down-button:hover, QDoubleSpinBox::down-button:hover {{
+                background: #e8ecf0;
+            }}
+            QSpinBox::down-button:pressed, QDoubleSpinBox::down-button:pressed {{
+                background: #d0d7de;
+            }}
+            QTextEdit {{
                 background: #ffffff;
                 color: #1f2328;
                 border: 1px solid #c9d1d9;
@@ -351,33 +414,31 @@ class MainWindow(QMainWindow):
                 padding: 6px;
                 selection-background-color: #1f2328;
                 selection-color: #ffffff;
-            }
-            QTextEdit {
                 font-family: Menlo, Monaco, Consolas, monospace;
                 font-size: 12px;
-            }
-            QSplitter::handle {
+            }}
+            QSplitter::handle {{
                 background: #d0d7de;
                 width: 1px;
-            }
-            QScrollArea {
+            }}
+            QScrollArea {{
                 border: 0;
-            }
-            QScrollBar:vertical {
+            }}
+            QScrollBar:vertical {{
                 background: #ffffff;
                 width: 10px;
                 margin: 0;
-            }
-            QScrollBar::handle:vertical {
+            }}
+            QScrollBar::handle:vertical {{
                 background: #8c959f;
                 min-height: 28px;
                 border-radius: 4px;
-            }
-            QStatusBar {
+            }}
+            QStatusBar {{
                 background: #ffffff;
                 color: #1f2328;
                 border-top: 1px solid #d0d7de;
-            }
+            }}
             """
         )
 
