@@ -143,7 +143,7 @@ class MainWindow(QMainWindow):
         header_layout.setSpacing(2)
         title = QLabel("ADPCM Speech Coder")
         title.setObjectName("title")
-        subtitle = QLabel("Python/PyQt6 port of the Matlab speech-processing GUI")
+        subtitle = QLabel("Python/PyQt6 speech-processing GUI")
         subtitle.setObjectName("subtitle")
         header_layout.addWidget(title)
         header_layout.addWidget(subtitle)

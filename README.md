@@ -10,7 +10,8 @@ Semestrálne vypracovanie prevádza Matlab GUI aplikáciu `adpcm_GUI25.m` do Pyt
 ./run_app.sh
 ```
 
-Skript pri prvom spustení vytvorí lokálne virtuálne prostredie `venv`, nainštaluje závislosti z `requirements.txt` a spustí aplikáciu.
+Skript pri prvom spustení vytvorí lokálne virtuálne prostredie `venv`, 
+nainštaluje závislosti z `requirements.txt` a spustí aplikáciu.
 
 Ručný postup pre macOS/Linux:
 
@@ -36,7 +37,8 @@ Najjednoduchšie spustenie:
 run_app.bat
 ```
 
-Skript pri prvom spustení vytvorí lokálne virtuálne prostredie `venv`, nainštaluje závislosti z `requirements.txt` a spustí aplikáciu.
+Skript pri prvom spustení vytvorí lokálne virtuálne prostredie `venv`, 
+nainštaluje závislosti z `requirements.txt` a spustí aplikáciu.
 
 Ručný postup pre Windows:
 
@@ -63,7 +65,8 @@ python -m venv venv
 - prehratie pôvodného, kódovaného a chybového signálu,
 - uloženie výstupov do `adpcm_py/output`.
 
-V pôvodnom ZIP-e nebol samostatný vstupný speech WAV z priečinka `speech_files`, preto je v `adpcm_py/data/hcdr05.wav` pripravený ukážkový WAV na okamžité vyskúšanie aplikácie.
+V pôvodnom ZIP-e nebol samostatný vstupný speech WAV z priečinka `speech_files`, 
+preto sú v `adpcm_py/data/` pripravené ukážkové WAV súboryna okamžité vyskúšanie aplikácie.
 
 ## Vývojové prostredie
 
